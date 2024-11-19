@@ -1,7 +1,9 @@
 import atexit
 import logging
+from pathlib import Path
 import shutil
 import sys
+import pickle
 
 from . import backend
 
@@ -89,19 +91,43 @@ def journal_to_string_tree(journal: Journal) -> str:
     return tree_str
 
 
-def run():
-    cfg = load_cfg()
-    log_format = "[%(asctime)s] %(levelname)s: %(message)s"
-    logging.basicConfig(
-        level=getattr(logging, cfg.log_level.upper()), format=log_format, handlers=[]
-    )
+def run(node_path: str = "/home/v-yuanteli/bowen/t/aideml_plus/logs/crimson-toucanet-of-opportunity"):
+    continue_run = False
+    logger = logging.getLogger("aide")
+    if node_path is not None:
+        cfg_file = Path(node_path) / "cfg.pkl"
+        state_file = Path(node_path) / "run_state.pkl"
+        if state_file.exists() and cfg_file.exists():
+            with open(cfg_file, "rb") as f:
+                cfg = pickle.load(f)
+            with open(state_file, "rb") as f:
+                saved_state = pickle.load(f)
+            journal = saved_state["journal"]
+            global_step = saved_state["global_step"]
+            log_format = "[%(asctime)s] %(levelname)s: %(message)s"
+            logging.basicConfig(
+                level=getattr(logging, cfg.log_level.upper()), format=log_format, handlers=[]
+            )
+            logger.info(f"Resuming run from step {global_step}")
+            continue_run = True
+    else:
+        cfg = load_cfg()
+        journal = Journal()
+        global_step = len(journal)
+        log_format = "[%(asctime)s] %(levelname)s: %(message)s"
+        logging.basicConfig(
+            level=getattr(logging, cfg.log_level.upper()), format=log_format, handlers=[]
+        )
+        logger.info("Starting a new run")
+        
     # dont want info logs from httpx
     httpx_logger: logging.Logger = logging.getLogger("httpx")
     httpx_logger.setLevel(logging.WARNING)
 
-    logger = logging.getLogger("aide")
     # save logs to files as well, using same format
     cfg.log_dir.mkdir(parents=True, exist_ok=True)
+    cfg_file = cfg.log_dir / "cfg.pkl"
+    state_file = cfg.log_dir / "run_state.pkl"
 
     # we'll have a normal log file and verbose log file. Only normal to console
     file_handler = logging.FileHandler(cfg.log_dir / "aide.log")
@@ -124,8 +150,9 @@ def run():
     task_desc = load_task_desc(cfg)
     task_desc_str = backend.compile_prompt_to_md(task_desc)
 
-    with Status("Preparing agent workspace (copying and extracting files) ..."):
-        prep_agent_workspace(cfg)
+    if not continue_run:
+        with Status("Preparing agent workspace (copying and extracting files) ..."):
+            prep_agent_workspace(cfg)
 
     def cleanup():
         if global_step == 0:
@@ -133,7 +160,6 @@ def run():
 
     atexit.register(cleanup)
 
-    journal = Journal()
     agent = Agent(
         task_desc=task_desc,
         cfg=cfg,
@@ -196,6 +222,10 @@ def run():
             logger.info(journal_to_string_tree(journal))
         save_run(cfg, journal)
         global_step = len(journal)
+        with open(state_file, "wb") as f:
+            pickle.dump({"journal": journal, "global_step": global_step}, f)
+        with open(cfg_file, "wb") as f:
+            pickle.dump(cfg, f)
     interpreter.cleanup_session()
 
 

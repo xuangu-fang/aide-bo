@@ -27,6 +27,7 @@ from rich.markdown import Markdown
 from rich.status import Status
 from rich.tree import Tree
 from .utils.config import load_task_desc, prep_agent_workspace, save_run, load_cfg
+import argparse
 
 
 class VerboseFilter(logging.Filter):
@@ -91,7 +92,11 @@ def journal_to_string_tree(journal: Journal) -> str:
     return tree_str
 
 
-def run(node_path: str = None):
+def run():
+    parser = argparse.ArgumentParser(description="Run the AIDE experiment.")
+    parser.add_argument("--node_path", type=str, help="Path to the node to resume from")
+    args = parser.parse_args()
+    node_path = args.node_path
     continue_run = False
     logger = logging.getLogger("aide")
     if node_path is not None:

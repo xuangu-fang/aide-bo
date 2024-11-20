@@ -114,6 +114,14 @@ def run(node_path: str = None):
             )
             logger.info(f"Resuming run from step {global_step}")
             continue_run = True
+        else:
+            journal = Journal()
+            global_step = len(journal)
+            log_format = "[%(asctime)s] %(levelname)s: %(message)s"
+            logging.basicConfig(
+                level=getattr(logging, cfg.log_level.upper()), format=log_format, handlers=[]
+            )
+            logger.info("Starting a new run")
     else:
         journal = Journal()
         global_step = len(journal)

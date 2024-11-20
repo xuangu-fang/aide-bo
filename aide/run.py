@@ -92,11 +92,10 @@ def journal_to_string_tree(journal: Journal) -> str:
     return tree_str
 
 
-def run():
-    parser = argparse.ArgumentParser(description="Run the AIDE experiment.")
-    parser.add_argument("--node_path", type=str, help="Path to the node to resume from")
-    args = parser.parse_args()
-    node_path = args.node_path
+def run(node_path: str = None):
+    cfg = load_cfg()
+    node_path = cfg.node_path
+    logger.info(node_path)
     continue_run = False
     logger = logging.getLogger("aide")
     if node_path is not None:
@@ -116,7 +115,6 @@ def run():
             logger.info(f"Resuming run from step {global_step}")
             continue_run = True
     else:
-        cfg = load_cfg()
         journal = Journal()
         global_step = len(journal)
         log_format = "[%(asctime)s] %(levelname)s: %(message)s"

@@ -95,9 +95,9 @@ def journal_to_string_tree(journal: Journal) -> str:
 def run(node_path: str = None):
     cfg = load_cfg()
     node_path = cfg.node_path
-    logger.info(node_path)
     continue_run = False
     logger = logging.getLogger("aide")
+    logger.info(node_path)
     if node_path is not None:
         cfg_file = Path(node_path) / "cfg.pkl"
         state_file = Path(node_path) / "run_state.pkl"

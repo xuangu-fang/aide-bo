@@ -91,7 +91,7 @@ def journal_to_string_tree(journal: Journal) -> str:
     return tree_str
 
 
-def run(node_path: str = "/home/v-yuanteli/bowen/t/aideml_plus/logs/crimson-toucanet-of-opportunity"):
+def run(node_path: str = None):
     continue_run = False
     logger = logging.getLogger("aide")
     if node_path is not None:

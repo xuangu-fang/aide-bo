@@ -98,7 +98,7 @@ def run(node_path: str = None):
     continue_run = False
     logger = logging.getLogger("aide")
     logger.info(node_path)
-    if node_path is not None:
+    if node_path is not None and node_path != "standard":  # here use `stardard` to align with mlebench
         cfg_file = Path(node_path) / "cfg.pkl"
         state_file = Path(node_path) / "run_state.pkl"
         if state_file.exists() and cfg_file.exists():

@@ -182,6 +182,7 @@ def run(node_path: str = None):
     )
 
     global_step = len(journal)
+    agent.current_step = global_step
     prog = Progress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(bar_width=20),

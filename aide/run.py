@@ -161,9 +161,9 @@ def run(node_path: str = None):
     task_desc = load_task_desc(cfg)
     task_desc_str = backend.compile_prompt_to_md(task_desc)
 
-    if not continue_run:
-        with Status("Preparing agent workspace (copying and extracting files) ..."):
-            prep_agent_workspace(cfg)
+    # if not continue_run:
+    with Status("Preparing agent workspace (copying and extracting files) ..."):
+        prep_agent_workspace(cfg)
 
     def cleanup():
         if global_step == 0:

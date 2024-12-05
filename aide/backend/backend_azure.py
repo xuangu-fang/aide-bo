@@ -2,7 +2,10 @@
 
 import json
 import logging
+import os
 import time
+
+import requests
 
 from aide.backend.utils import (
     FunctionSpec,
@@ -30,10 +33,19 @@ OPENAI_TIMEOUT_EXCEPTIONS = (
     openai.InternalServerError,
 )
 
+def get_azure_ad_token():
+    response = requests.post("http://10.150.240.106:9999")
+    response.raise_for_status()
+    token = response.text
+    return token
+
 @once
 def _setup_openai_client():
     global _client
-    _client = openai.AzureOpenAI(max_retries=0)
+    _client = openai.AzureOpenAI(max_retries=0,
+                                 azure_ad_token_provider=get_azure_ad_token
+            )
+    
 
 def query(
     system_message: str | None,
@@ -90,3 +102,6 @@ def query(
     }
 
     return output, req_time, in_tokens, out_tokens, info
+
+if __name__ == "__main__":
+    print(query("system message", "user message", model="gpt-4o_2024-08-06"))

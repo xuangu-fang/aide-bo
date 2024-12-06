@@ -45,12 +45,12 @@ agent:
 
   # LLM settings for coding
   code:
-    model: gpt-4o
+    model: gpt-4o_2024-08-06
     temp: 0.5
 
   # LLM settings for evaluating program output / tracebacks
   feedback:
-    model: gpt-4o
+    model: gpt-4o_2024-08-06
     temp: 0.5
 
   # hyperparameters for the tree search

@@ -89,3 +89,5 @@ azure-common==1.1.28
 azure-core==1.32.0
 azure-storage-blob 
 azure-identity
+
+httpx==0.27.2

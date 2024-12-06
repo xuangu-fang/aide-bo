@@ -29,7 +29,7 @@ provider_to_query_func = {
 def query(
     system_message: PromptType | None,
     user_message: PromptType | None,
-    model: str = "gpt-4o",
+    model: str,
     temperature: float | None = None,
     max_tokens: int | None = None,
     func_spec: FunctionSpec | None = None,

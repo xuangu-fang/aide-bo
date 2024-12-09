@@ -18,8 +18,8 @@ def determine_provider(model: str) -> str:
 
 
 provider_to_query_func = {
-    # "openai": backend_openai.query,
-    "openai": backend_azure.query,
+    "openai": backend_openai.query,
+    "azure": backend_azure.query,
     "anthropic": backend_anthropic.query,
     "gdm": backend_gdm.query,
     "openrouter": backend_openrouter.query,

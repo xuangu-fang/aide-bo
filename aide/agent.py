@@ -66,6 +66,22 @@ review_func_spec = FunctionSpec(
     description="Submit a review evaluating the output of the training script.",
 )
 
+BO_eval_func_spec = FunctionSpec(
+    name="BO_eval",
+    description="Estimate the potential metric of the current plan, based on the similarity between the current plan and the history, background knowledge, data preview, etc. It's like a surrogate model of BO, but using LLM as the surrogate model, and compute the similarity between the current plan and the history.",
+    json_schema={
+        "type": "object",
+        "properties": {
+            "metric": {"type": "number", 
+                       "description": "The potential metric of the current plan"},
+            "analysis": {"type": "string", 
+                         "description": "The analysis of the current plan to estimate the metric, which is based on the similarity between the current plan and the history, background knowledge, data preview, etc."},
+        },
+        "required": ["metric", "analysis"],
+    },
+)
+
+
 
 class Agent:
     def __init__(
@@ -465,3 +481,13 @@ class Agent:
             )
 
         return node
+
+
+    def BO_surrogate_eval(self, node: Node,) -> Node:
+        """
+        a simple implementation of LLM-BO(Bayesian Optimization):
+        use the LLM as the surrogate model by incontext learning (ICL),
+        Input: Given the history of ,<plan, code, metric> or <plan, metric>, current plan
+        Output: predictive metric of the current plan
+        """
+        

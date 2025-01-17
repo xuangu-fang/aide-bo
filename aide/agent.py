@@ -99,7 +99,7 @@ class Agent:
         self.start_time = time.time()
         self.current_step = 0
 
-    def search_policy(self) -> Node | None:
+    def search_policy(self, BO_debug: bool = False,) -> Node | None:
         """Select a node to work on (or None to draft a new node)."""
         search_cfg = self.acfg.search
 
@@ -116,10 +116,29 @@ class Agent:
                 for n in self.journal.buggy_nodes
                 if (n.is_leaf and n.debug_depth <= search_cfg.max_debug_depth)
             ]
+
             if debuggable_nodes:
-                node_to_debug = random.choice(debuggable_nodes)
-                logger.info(f"[search policy] debugging node {node_to_debug.id}")
-                return node_to_debug
+                if BO_debug:
+                    """
+                    apply the LLM-BO as a surrogate model to select the node to debug
+                     - first, apply the BO surrogate model to estimate the metric of each node
+                     - then, select the node with the highest estimated metric
+                    """
+                    # Apply BO surrogate model to estimate metrics for each debuggable node
+                    nodes_with_metrics = []
+                    for node in debuggable_nodes:
+                        node = self.BO_surrogate_eval(node)
+                        nodes_with_metrics.append((node, node.BO_est_metric))
+                    
+                    # Sort nodes by estimated metric and select the best one
+                    nodes_with_metrics.sort(key=lambda x: x[1], reverse=True)
+                    node_to_debug = nodes_with_metrics[0][0]
+                    logger.info(f"[search policy] debugging node {node_to_debug.id} selected by BO surrogate")
+                    return node_to_debug
+                else:
+                    node_to_debug = random.choice(debuggable_nodes)
+                    logger.info(f"[search policy] debugging node {node_to_debug.id}")
+                    return node_to_debug
 
         # back to drafting if no nodes to improve
         good_nodes = self.journal.good_nodes
@@ -263,7 +282,7 @@ class Agent:
         logger.info(f"Drafted new node {new_node.id}")
         return new_node
 
-    def _improve(self, parent_node: Node) -> Node:
+    def _improve(self, parent_node: Node, BO_improve: bool = False, candidate_num: int = 5) -> Node:
         introduction = (
             "You are a Kaggle grandmaster attending a competition. You are provided with a previously developed "
             "solution below and should improve it in order to further increase the (test time) performance. "
@@ -300,10 +319,43 @@ class Agent:
         }
         prompt["Instructions"] |= self._prompt_impl_guideline
 
-        plan, code = self.plan_and_code_query(prompt)
-        new_node = Node(plan=plan, code=code, parent=parent_node)
-        logger.info(f"Improved node {parent_node.id} to create new node {new_node.id}")
-        return new_node
+        if BO_improve:
+            """
+            apply the LLM-BO as a surrogate model to select the node to improve
+             - first, repeat the query N times to get N different plans
+             - then, apply the BO surrogate model to estimate the metric of each plan
+             - finally, select the plan with the highest estimated metric
+            """
+
+            prompt["Instructions"] |= {
+                "BO improvement sketch guideline": [
+                    "you should think widely and creatively about how to improve the previous solution",
+                    "you should propose a solution that is not obvious and is not the same as the previous solution",
+                    "you should propose a solution that is not the same as the previous solution",
+                ],
+            }
+
+            # repeat the query N times to get N different plans
+            # apply the BO surrogate model to estimate the metric of each plan
+            candidate_with_metrics = []
+            for _ in range(candidate_num):
+                plan, code = self.plan_and_code_query(prompt)
+                node = Node(plan=plan, code=code, parent=parent_node)
+                node = self.BO_surrogate_eval(node)
+                candidate_with_metrics.append((node, node.BO_est_metric))
+
+            # select the plan with the highest estimated metric
+            candidate_with_metrics.sort(key=lambda x: x[1], reverse=True)
+            new_node = candidate_with_metrics[0][0]
+            logger.info(f"[search policy] improving node {parent_node.id} selected by BO surrogate")
+            return new_node
+
+        else:
+            plan, code = self.plan_and_code_query(prompt)
+
+            new_node = Node(plan=plan, code=code, parent=parent_node)
+            logger.info(f"Improved node {parent_node.id} to create new node {new_node.id}")
+            return new_node
 
     def _debug(self, parent_node: Node) -> Node:
         introduction = (
@@ -358,7 +410,7 @@ class Agent:
         if not self.journal.nodes or self.data_preview is None:
             self.update_data_preview()
 
-        parent_node = self.search_policy()
+        parent_node = self.search_policy(BO_debug=self.acfg.BO_debug)
         logger.info(f"Agent is generating code, parent node type: {type(parent_node)}")
 
         if parent_node is None:
@@ -366,7 +418,7 @@ class Agent:
         elif parent_node.is_buggy:
             result_node = self._debug(parent_node)
         else:
-            result_node = self._improve(parent_node)
+            result_node = self._improve(parent_node, BO_improve=self.acfg.BO_improve, candidate_num=self.acfg.BO_candidate_num)
 
         result_node = self.parse_exec_result(
             node=result_node,
@@ -486,8 +538,56 @@ class Agent:
     def BO_surrogate_eval(self, node: Node,) -> Node:
         """
         a simple implementation of LLM-BO(Bayesian Optimization):
-        use the LLM as the surrogate model by incontext learning (ICL),
+        use the LLM as the surrogate model by incontext learning (ICL).
         Input: Given the history of ,<plan, code, metric> or <plan, metric>, current plan
         Output: predictive metric of the current plan
         """
+
+        instructions = (
+            "You are a Kaggle grandmaster attending a competition and you are an expert in machine learning. "
+            "You already have a history of previous solutions and their metrics. "
+            "Analyze the similarity and differences between the current plan and historical solutions"
+            "Consider what worked well and what didn't work in previous attempts",
+            "Estimate a potential metric value based on this analysis along with you knowledge of the task, data and background knowledge",
+            "Provide reasoning for your estimate, and the metric value you estimate"
+        )
         
+        prompt = {
+            "Task": "Evaluate the potential metric of the current plan based on historical solutions",
+            "Current plan": node.plan,
+            "Memory": self.journal.generate_summary(),
+            "Instructions": instructions
+        }
+
+        if self.acfg.data_preview:
+            prompt["Data Overview"] = self.data_preview
+
+        response = cast(
+            dict,
+            query(
+                system_message=prompt,
+                user_message=None, 
+                func_spec=BO_eval_func_spec,
+                model=self.acfg.feedback.model,
+                temperature=self.acfg.feedback.temp,
+                convert_system_to_user=self.acfg.convert_system_to_user,
+            ),
+        )
+
+        # Store the analysis and predicted metric
+        node.BO_analysis = response["analysis"]
+        # node.BO_est_metric = MetricValue(response["metric"], maximize=None)
+
+        logger.info(f"BO surrogate evaluation for Node {node.id}: predicted metric = {response['metric']}")
+
+        # if the metric is nan, then fill the metric with the worst metric
+        if not isinstance(response["metric"], float):
+            response["metric"] = None
+
+        # extra check, to catch cases where judge fails
+        if response["metric"] is None:
+            response["metric"] = None
+
+        node.BO_est_metric = MetricValue(response["metric"], maximize=None)
+
+        return node

@@ -42,7 +42,12 @@ agent:
   convert_system_to_user: False
   # whether to obfuscate that we're doing kaggle
   obfuscate: False
-
+  # whether to use BO surrogate model to improve the node
+  BO_improve: False
+  # whether to use BO surrogate model to debug the node
+  BO_debug: False
+  # number of candidates to evaluate in BO surrogate model
+  BO_candidate_num: 5
   # LLM settings for coding
   code:
     model: gpt-4o_2024-08-06

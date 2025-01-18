@@ -546,10 +546,10 @@ class Agent:
         instructions = (
             "You are a Kaggle grandmaster attending a competition and you are an expert in machine learning. "
             "You already have a history of previous solutions and their metrics. "
-            "Analyze the similarity and differences between the current plan and historical solutions"
-            "Consider what worked well and what didn't work in previous attempts",
-            "Estimate a potential metric value based on this analysis along with you knowledge of the task, data and background knowledge",
-            "Provide reasoning for your estimate, and the metric value you estimate"
+            "Analyze the similarity and differences between the current plan and historical solutions."
+            "Consider what worked well and what didn't work in previous attempts."
+            "Estimate a potential metric value based on this analysis along with you knowledge of the task, data and background knowledge."
+            "Provide reasoning for your estimate, and the metric value you estimate."
         )
         
         prompt = {

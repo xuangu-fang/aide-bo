@@ -53,6 +53,11 @@ class AgentConfig:
 
     search: SearchConfig
 
+    # BO surrogate model
+    BO_improve: bool
+    BO_debug: bool
+    BO_candidate_num: int
+
 
 @dataclass
 class ExecConfig:

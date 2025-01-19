@@ -52,7 +52,7 @@ def cfg_to_tree_struct(cfg, jou: Journal):
         # edges=edges,
         # layout=layout.tolist(),
         edges = [(n.parent.id if n.parent else "", n.id) for n in jou.nodes],
-        layout = normalize_layout(generate_layout(len(jou), edges)),
+        layout = layout.tolist(),
         plan=[textwrap.fill(n.plan, width=80) for n in jou.nodes],
         code=[n.code for n in jou],
         term_out=[n.term_out for n in jou],

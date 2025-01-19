@@ -10,18 +10,16 @@ from ..journal import Journal
 
 
 def get_edges(journal: Journal):
-
-    # for node in journal:
-    #     for c in node.children:
-    #         yield (node.step, c.step)
     """Convert parent-child relationships to edge list with numeric indices"""
     # 创建 node id 到数字索引的映射
     id_to_idx = {node.id: idx for idx, node in enumerate(journal.nodes)}
     
-    for node in journal:
-        for c in node.children:
-            # 使用数字索引而不是字符串ID
-            yield (id_to_idx[node.step], id_to_idx[c.step])
+    edges = []
+    for node in journal.nodes:  # 使用 journal.nodes 而不是直接迭代 journal
+        for child in node.children:
+            # 使用 node.id 而不是 node.step
+            edges.append((id_to_idx[node.id], id_to_idx[child.id]))
+    return edges
 
 def generate_layout(n_nodes, edges, layout_type="rt"):
     """Generate visual layout of graph"""

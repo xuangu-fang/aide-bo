@@ -50,8 +50,8 @@ class Node(DataClassJsonMixin):
     is_buggy: bool = field(default=None, kw_only=True)  # type: ignore
 
     # ---- surrogate model ----
-    BO_analysis: str = field(default=None, kw_only=True)  # type: ignore
-    BO_est_metric: MetricValue = field(default=None, kw_only=True)  # type: ignore
+    # BO_analysis: str = field(default=None, kw_only=True)  # type: ignore
+    # BO_est_metric: MetricValue = field(default=None, kw_only=True)  # type: ignore
 
     def __post_init__(self) -> None:
         if self.parent is not None:

@@ -10,16 +10,10 @@ from ..journal import Journal
 
 
 def get_edges(journal: Journal):
-    """Convert parent-child relationships to edge list with numeric indices"""
-    # 创建 node id 到数字索引的映射
-    id_to_idx = {node.id: idx for idx, node in enumerate(journal.nodes)}
-    
-    edges = []
-    for node in journal.nodes:  # 使用 journal.nodes 而不是直接迭代 journal
-        for child in node.children:
-            # 使用 node.id 而不是 node.step
-            edges.append((id_to_idx[node.id], id_to_idx[child.id]))
-    return edges
+    for node in journal:
+        for c in node.children:
+            yield (node.step, c.step)
+
 
 def generate_layout(n_nodes, edges, layout_type="rt"):
     """Generate visual layout of graph"""
@@ -45,20 +39,24 @@ def normalize_layout(layout: np.ndarray):
 
 
 def cfg_to_tree_struct(cfg, jou: Journal):
-    # 获取数字索引的边列表用于布局计算
     edges = list(get_edges(jou))
     layout = normalize_layout(generate_layout(len(jou), edges))
 
-    # 返回时使用字符串ID的边列表用于可视化
+    # metrics = np.array([n.metric.value_npsafe for n in jou])
+    # metrics = (metrics - np.nanmin(metrics)) / (np.nanmax(metrics) - np.nanmin(metrics))
+    # metrics = np.nan_to_num(metrics, nan=1)
+    # metrics[:] = 0
+    metrics = np.array([0 for n in jou])
+
     return dict(
-        edges = [(n.parent.id if n.parent else "", n.id) for n in jou.nodes],
-        layout = layout.tolist(),
+        edges=edges,
+        layout=layout.tolist(),
         plan=[textwrap.fill(n.plan, width=80) for n in jou.nodes],
         code=[n.code for n in jou],
         term_out=[n.term_out for n in jou],
         analysis=[n.analysis for n in jou],
         exp_name=cfg.exp_name,
-        metrics=[0 for n in jou.nodes],
+        metrics=metrics.tolist(),
     )
 
 

@@ -127,8 +127,9 @@ class Agent:
                     # Apply BO surrogate model to estimate metrics for each debuggable node
                     nodes_with_metrics = []
                     for node in debuggable_nodes:
-                        node = self.BO_surrogate_eval(node)
-                        nodes_with_metrics.append((node, node.BO_est_metric))
+                        # node = self.BO_surrogate_eval(node)
+                        bo_metric = self.BO_surrogate_eval(node)
+                        nodes_with_metrics.append((node, bo_metric))
                     
                     # Sort nodes by estimated metric and select the best one
                     nodes_with_metrics.sort(key=lambda x: x[1], reverse=True)
@@ -343,8 +344,8 @@ class Agent:
             for _ in range(candidate_num):
                 plan, code = self.plan_and_code_query(prompt)
                 node = Node(plan=plan, code=code, parent=parent_node)
-                node = self.BO_surrogate_eval(node)
-                candidate_with_metrics.append((node, node.BO_est_metric))
+                bo_metric = self.BO_surrogate_eval(node)
+                candidate_with_metrics.append((node, bo_metric))
 
             # select the plan with the highest estimated metric
             candidate_with_metrics.sort(key=lambda x: x[1], reverse=True)
@@ -537,7 +538,7 @@ class Agent:
         return node
 
 
-    def BO_surrogate_eval(self, node: Node,) -> Node:
+    def BO_surrogate_eval(self, node: Node,) -> float:
         """
         a simple implementation of LLM-BO(Bayesian Optimization):
         use the LLM as the surrogate model by incontext learning (ICL).
@@ -577,7 +578,7 @@ class Agent:
         )
 
         # Store the analysis and predicted metric
-        node.BO_analysis = response["analysis"]
+        # node.BO_analysis = response["analysis"]
         # node.BO_est_metric = MetricValue(response["metric"], maximize=None)
 
         logger.info(f"BO surrogate evaluation for Node {node.id}: predicted metric = {response['metric']}")
@@ -590,6 +591,6 @@ class Agent:
         if response["metric"] is None:
             response["metric"] = None
 
-        node.BO_est_metric = MetricValue(response["metric"], maximize=None)
+        # node.BO_est_metric = MetricValue(response["metric"], maximize=None)
 
-        return node
+        return response["metric"]

@@ -49,8 +49,10 @@ def cfg_to_tree_struct(cfg, jou: Journal):
     metrics = np.array([0 for n in jou])
 
     return dict(
-        edges=edges,
-        layout=layout.tolist(),
+        # edges=edges,
+        # layout=layout.tolist(),
+        edges = [(n.parent.id if n.parent else "", n.id) for n in jou.nodes],
+        layout = normalize_layout(generate_layout(len(jou), edges)),
         plan=[textwrap.fill(n.plan, width=80) for n in jou.nodes],
         code=[n.code for n in jou],
         term_out=[n.term_out for n in jou],

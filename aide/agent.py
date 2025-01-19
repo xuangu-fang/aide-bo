@@ -206,6 +206,14 @@ class Agent:
                 f"The evaluation should be based on {self.acfg.k_fold_validation}-fold cross-validation but only if that's an appropriate evaluation for the task at hand."
             )
 
+        prompt["Instructions"] |= {
+            "Time constraints": [
+                f"The code must complete within {humanize.naturaldelta(exec_timeout)}",
+                "Avoid computationally expensive operations like recursive feature elimination",
+                "Consider using lighter feature selection methods or skip feature selection if not critical",
+            ]
+        }
+
         return {"Implementation guideline": impl_guideline}
 
     @property
@@ -332,6 +340,8 @@ class Agent:
                     "you should think widely and creatively about how to improve the previous solution",
                     "you should propose a solution that is not obvious and is not the same as the previous solution",
                     "you should propose a solution that is not the same as the previous solution",
+                    "Avoid computationally expensive operations like recursive feature elimination",
+                    "Consider using lighter feature selection methods",
                 ],
             }
 

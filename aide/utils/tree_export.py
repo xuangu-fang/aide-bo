@@ -10,7 +10,7 @@ from ..journal import Journal
 
 
 def get_edges(journal: Journal):
-    for node in journal:
+    for node in journal.nodes:
         for c in node.children:
             yield (node.step, c.step)
 

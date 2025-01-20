@@ -12,7 +12,20 @@ from ..journal import Journal
 def get_edges(journal: Journal):
     for node in journal.nodes:
         for c in node.children:
-            yield (node.step, c.step)
+
+            # check if the edge is valid (non-negative)
+            try:
+                assert node.step is not None and c.step is not None and node.step > 0 and c.step > 0
+                yield (node.step, c.step)
+            
+            
+            except KeyError as e:
+                logger.warning(f"KeyError: {e}")
+                logger.warning(f"Current node ID: {node.id}")
+                logger.warning(f"Child node ID: {c.id}")
+                print(e)
+                
+            
 
 
 def generate_layout(n_nodes, edges, layout_type="rt"):
@@ -40,6 +53,11 @@ def normalize_layout(layout: np.ndarray):
 
 def cfg_to_tree_struct(cfg, jou: Journal):
     edges = list(get_edges(jou))
+    # 如果没有边，至少确保布局能工作
+    if not edges:
+        edges = [(0, 0)]  # 添加一个虚拟边以防止布局错误
+
+
     layout = normalize_layout(generate_layout(len(jou), edges))
 
     # metrics = np.array([n.metric.value_npsafe for n in jou])

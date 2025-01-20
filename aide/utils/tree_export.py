@@ -13,12 +13,12 @@ def get_edges(journal: Journal):
     for node in journal.nodes:
         for c in node.children:
             # 检查 step 是否有效
-            if node.step is None or c.step is None:
-                logger.warning(f"Invalid step: node={node.step}, child={c.step}")
-                continue
-            if node.step < 0 or c.step < 0:
-                logger.warning(f"Negative step: node={node.step}, child={c.step}")
-                continue
+            # if node.step is None or c.step is None:
+            #     logger.warning(f"Invalid step: node={node.step}, child={c.step}")
+            #     continue
+            # if node.step < 0 or c.step < 0:
+            #     logger.warning(f"Negative step: node={node.step}, child={c.step}")
+            #     continue
             yield (node.step, c.step)
                 
             

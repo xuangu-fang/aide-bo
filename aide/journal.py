@@ -57,6 +57,11 @@ class Node(DataClassJsonMixin):
         if self.parent is not None:
             self.parent.children.add(self)
 
+    def set_parent(self, parent_node: "Node") -> None:
+        if parent_node is not None:
+            self.parent = parent_node
+            parent_node.children.add(self)
+
     @property
     def stage_name(self) -> Literal["draft", "debug", "improve"]:
         """

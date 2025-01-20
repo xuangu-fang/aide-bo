@@ -343,13 +343,15 @@ class Agent:
             candidate_with_metrics = []
             for _ in range(candidate_num):
                 plan, code = self.plan_and_code_query(prompt)
-                node = Node(plan=plan, code=code, parent=parent_node)
+                node = Node(plan=plan, code=code, parent=None)
                 bo_metric = self.BO_surrogate_eval(node)
                 candidate_with_metrics.append((node, bo_metric))
 
             # select the plan with the highest estimated metric
             candidate_with_metrics.sort(key=lambda x: x[1], reverse=True)
             new_node = candidate_with_metrics[0][0]
+            new_node.set_parent(parent_node)
+            # 
             logger.info(f"[search policy] improving node {parent_node.id} selected by BO surrogate")
             return new_node
 

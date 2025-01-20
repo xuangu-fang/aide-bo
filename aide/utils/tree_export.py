@@ -15,6 +15,8 @@ def get_edges(journal: Journal):
 
             # check if the edge is valid (non-negative)
             try:
+                print("node.step", node.step)
+                print("c.step", c.step)
                 assert node.step is not None and c.step is not None and node.step > 0 and c.step > 0
                 yield (node.step, c.step)
             

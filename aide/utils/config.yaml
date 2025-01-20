@@ -43,7 +43,7 @@ agent:
   # whether to obfuscate that we're doing kaggle
   obfuscate: False
   # whether to use BO surrogate model to improve the node
-  BO_improve: False
+  BO_improve: True
   # whether to use BO surrogate model to debug the node
   BO_debug: True
   # number of candidates to evaluate in BO surrogate model
